@@ -5,9 +5,14 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     utils.url = "github:numtide/flake-utils";
+
+    artwork = {
+      url = "github:NixOS/nixos-artwork";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, ... }@inputs: inputs.utils.lib.eachSystem [
+  outputs = { self, nixpkgs, artwork, ... }@inputs: inputs.utils.lib.eachSystem [
     "x86_64-linux"
     "i686-linux"
     "aarch64-linux"

@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "artwork": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1696446040,
+        "narHash": "sha256-468ppSe/b8vq1lndD2V+zDXC2TKkFAd7uRlxKwNsdr4=",
+        "owner": "NixOS",
+        "repo": "nixos-artwork",
+        "rev": "da4697b5621460fe438de0cf2f44c42c926e045d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixos-artwork",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1700612854,
@@ -18,6 +34,7 @@
     },
     "root": {
       "inputs": {
+        "artwork": "artwork",
         "nixpkgs": "nixpkgs",
         "utils": "utils"
       }
