@@ -134,7 +134,7 @@ in
         hp.dbus
         hp.monad-logger
       ];
-      config = ''
+      config = pkgs.writeText "xmonad.hs" ''
         import           Control.Monad                         ( replicateM_ )
         import           Data.Foldable                         ( traverse_ )
         import           Data.Monoid
