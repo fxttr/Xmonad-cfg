@@ -90,7 +90,7 @@ import Data.Char (isSpace)
 main :: IO ()
 main = do
   spawn "feh --bg-fill /home/florian/Pictures/Wallpaper/DesertPeak/DesertPeak-1.jpg"
-  xmproc <- spawnPipe "xmobar /persist/etc/nixos/programs/xmonad/xmobar.rc"
+  xmproc <- spawnPipe "xmobar"
   startUp xmproc
 
 startUp xm = xmonad . docks . ewmh . dynProjects . urgencyHook $ def
@@ -322,14 +322,14 @@ scratchpads = scratchpadApp <$> [ spotify, pavuctrl, gimp ]
 ------------------------------------------------------------------------
 -- Workspaces
 --
-devWs = "dev"
 webWs = "web"
+devWs = "dev"
 cliWs = "cli"
 msgWs = "msg"
 sysWs = "sys"
 
 myWS :: [WorkspaceId]
-myWS = [devWs, webWs, cliWs, msgWs, sysWs]
+myWS = [webWs, devWs, cliWs, msgWs, sysWs]
 
 projects :: [Project]
 projects =
