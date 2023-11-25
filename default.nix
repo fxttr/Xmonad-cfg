@@ -42,7 +42,7 @@ in
         separator_color = "frame";
         sort = "yes";
         idle_threshold = 120;
-        font = Museo Sans 10;
+        font = "Source Code Pro 10";
         line_height = 0;
         markup = "full";
         format = "<b>%s</b>\n%b";
