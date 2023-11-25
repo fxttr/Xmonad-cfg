@@ -34,6 +34,6 @@
             withHoogle = true;
           };
 
-        defaultPackage.x86_64-linux = pkgs.callPackage ./default.nix { };
+        defaultPackage = pkgs.callPackage ./default.nix { };
       });
 }
