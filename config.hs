@@ -60,10 +60,6 @@ import           XMonad.Layout.NoBorders               ( smartBorders )
 import           XMonad.Layout.PerWorkspace            ( onWorkspace )
 import           XMonad.Layout.Spacing                 ( spacing )
 import           XMonad.Layout.ThreeColumns            ( ThreeCol(..) )
-import           XMonad.Prompt                         ( XPConfig(..)
-                                                       , amberXPConfig
-                                                       , XPPosition(CenteredAt)
-                                                       )
 import           XMonad.Util.EZConfig                  ( mkNamedKeymap )
 import           XMonad.Util.NamedActions              ( (^++^)
                                                        , NamedAction (..)
@@ -77,9 +73,6 @@ import           XMonad.Util.NamedScratchpad           ( NamedScratchpad(..)
                                                        , defaultFloating
                                                        , namedScratchpadAction
                                                        , namedScratchpadManageHook
-                                                       )
-import           XMonad.Util.Run                       ( safeSpawn
-                                                       , spawnPipe
                                                        )
 import           XMonad.Util.SpawnOnce                 ( spawnOnce )
 import           XMonad.Util.WorkspaceCompare          ( getSortByIndex )
@@ -185,7 +178,7 @@ keybindings conf@XConfig {XMonad.modMask = modm} = M.fromList $
  where
   switchWsById =
     [ ((m .|. modm, k), (windows $ f i)) | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9], (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
-    
+
   switchScreen =
     [ ((m .|. modm, k), (screenWorkspace sc >>= flip whenJust (windows . f))) | (k, sc) <- zip [xK_w, xK_e, xK_r] [0..], (f, m)  <- [(W.view, 0), (W.shift, shiftMask)]]
 

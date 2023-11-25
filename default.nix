@@ -1,4 +1,4 @@
-{ pkgs, lib, hdmiOn, megasync, ... }:
+{ pkgs, lib, ... }:
 
 let
   extra = ''
@@ -9,7 +9,7 @@ let
     ${pkgs.xorg.setxkbmap}/bin/setxkbmap -option ctrl:nocaps
   '';
 
-  hdmiExtra = lib.optionalString hdmiOn ''
+  hdmiExtra = ''
     ${pkgs.xorg.xrandr}/bin/xrandr --output DVI-D-0 --rotate left
   '';
 in
@@ -28,7 +28,7 @@ in
   xsession = {
     enable = true;
 
-    initExtra = extra + polybarOpts + hdmiExtra;
+    initExtra = extra + hdmiExtra;
 
     windowManager.xmonad = {
       enable = true;
