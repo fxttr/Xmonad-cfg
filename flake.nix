@@ -34,6 +34,6 @@
             withHoogle = true;
           };
 
-        defaultPackage = pkgs.callPackage ./default.nix { };
+        defaultPackage = ./default.nix;
       });
 }
