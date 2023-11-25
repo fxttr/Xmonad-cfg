@@ -10,7 +10,7 @@ let
   '';
 
   hdmiExtra = ''
-    ${pkgs.xorg.xrandr}/bin/xrandr --output DVI-D-0 --rotate left
+    ${pkgs.xorg.xrandr}/bin/xrandr xrandr --output HDMI-0 --primary --mode 1920 x1080 --pos 0 x0 --rotate normal --output DP-0 --off --output DP-1 --mode 1920 x1080 --pos 1920 x0 --rotate normal --output DP-2 --off --output DP-3 --off --output DP-4 --off --output DP-5 --off
   '';
 in
 {
@@ -57,7 +57,7 @@ in
   xsession = {
     enable = true;
 
-    initExtra = extra;
+    initExtra = extra + hdmiExtra;
 
     windowManager.xmonad = {
       enable = true;
