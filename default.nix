@@ -49,7 +49,7 @@ in
                           ]
           , sepChar = "%" 
           , alignSep = "}{"
-          , template = "%StdinReader% }{ %cpu% | %memory% | <fc=#ff79c6>%date%</fc> | %uname%"
+          , template = "%StdinReader% }{ %cpu% | %memory% | <fc=#ff79c6>%date%</fc>"
           }
     '';
   };
