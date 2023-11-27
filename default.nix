@@ -315,7 +315,7 @@ in
             ] ++ switchWsById
          where
           switchWsById =
-            [ ((m .|. modm, k), (windows $ onCurrentScreen f i)) | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9], (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
+            [ ((m .|. modm, k), (windows $ onCurrentScreen f i)) | (i, k) <- zip (workspaces' conf) [xK_1 .. xK_9], (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
 
           switchScreen =
             [ ((m .|. modm, k), (screenWorkspace sc >>= flip whenJust (windows . f))) | (k, sc) <- zip [xK_w, xK_e, xK_r] [0..], (f, m)  <- [(W.view, 0), (W.shift, shiftMask)]]
