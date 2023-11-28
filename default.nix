@@ -228,8 +228,10 @@ in
         main :: IO ()
         main = do
           spawn "feh --bg-fill ${inputs.artwork}/wallpapers/nix-wallpaper-stripes.png"
-          xmproc <- spawnPipe "xmobar"
-          startUp xmproc
+          xmproc0 <- spawnPipe "xmobar -x 0"
+          xmproc1 <- spawnPipe "xmobar -x 1"
+          startUp xmproc0
+          startUp xmproc1
 
         startUp xm = xmonad . docks . ewmh . dynProjects . urgencyHook $ def
           { terminal           = myTerminal
