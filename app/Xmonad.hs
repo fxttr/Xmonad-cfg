@@ -1,40 +1,38 @@
-import           Control.Monad                         ( replicateM_ )
 import           Data.Foldable                         ( traverse_ )
-import           Data.Monoid
-import           Graphics.X11.ExtraTypes.XF86
-import           System.Exit
-import           System.IO                             ( hPutStr
-                                                       , hClose
-                                                       )
+import Data.Monoid ( Endo, All )
+import Graphics.X11.ExtraTypes.XF86
+    ( xF86XK_AudioLowerVolume,
+      xF86XK_AudioMute,
+      xF86XK_AudioNext,
+      xF86XK_AudioPlay,
+      xF86XK_AudioPrev,
+      xF86XK_AudioRaiseVolume,
+      xF86XK_AudioStop )
+import System.Exit ( exitSuccess )
 import           XMonad
-import           XMonad.Actions.CycleWS                ( Direction1D(..)
-                                                       , WSType(..)
-                                                       , findWorkspace
+import           XMonad.Actions.CycleWS                ( WSType(..)
+                                                       , findWorkspace, anyWS
                                                        )
 import           XMonad.Actions.DynamicProjects        ( Project(..)
                                                        , dynamicProjects
                                                        , switchProjectPrompt
                                                        )
 import           XMonad.Actions.DynamicWorkspaces      ( removeWorkspace )
-import           XMonad.Actions.FloatKeys              ( keysAbsResizeWindow
-                                                       , keysResizeWindow
-                                                       )
 import           XMonad.Actions.RotSlaves              ( rotSlavesUp )
 import           XMonad.Actions.SpawnOn                ( manageSpawn
-                                                       , spawnOn
+
                                                        )
 import           XMonad.Actions.WithAll                ( killAll )
 import           XMonad.Hooks.EwmhDesktops             ( ewmh
                                                        , ewmhDesktopsEventHook
                                                        , fullscreenEventHook
                                                        )
-import           XMonad.Hooks.FadeInactive             ( fadeInactiveLogHook )
 import           XMonad.Hooks.InsertPosition           ( Focus(Newer)
                                                        , Position(Below)
                                                        , insertPosition
                                                        )
 import           XMonad.Hooks.ManageDocks              ( Direction2D(..)
-                                                       , ToggleStruts(..)
+
                                                        , avoidStruts
                                                        , docks
                                                        , docksEventHook
@@ -60,41 +58,36 @@ import           XMonad.Layout.NoBorders               ( smartBorders )
 import           XMonad.Layout.PerWorkspace            ( onWorkspace )
 import           XMonad.Layout.Spacing                 ( spacing )
 import           XMonad.Layout.ThreeColumns            ( ThreeCol(..) )
-import           XMonad.Util.EZConfig                  ( mkNamedKeymap )
-import           XMonad.Util.NamedActions              ( (^++^)
-                                                       , NamedAction (..)
-                                                       , addDescrKeys'
-                                                       , addName
-                                                       , showKm
-                                                       , subtitle
-                                                       )
 import           XMonad.Util.NamedScratchpad           ( NamedScratchpad(..)
                                                        , customFloating
                                                        , defaultFloating
                                                        , namedScratchpadAction
                                                        , namedScratchpadManageHook
                                                        )
-import           XMonad.Util.SpawnOnce                 ( spawnOnce )
 import           XMonad.Util.WorkspaceCompare          ( getSortByIndex )
 
-import qualified Control.Exception                     as E
 import qualified Data.Map                              as M
 import qualified XMonad.StackSet                       as W
 import qualified XMonad.Util.NamedWindows              as W
-import XMonad.Hooks.DynamicLog
 import XMonad.Util.Run
 import XMonad.Prompt
 import XMonad.Prompt.Input
 import XMonad.Layout.IndependentScreens
-import Data.Char (isSpace)
+
+type AppName      = String
+type AppTitle     = String
+type AppClassName = String
+type AppCommand   = String
+
+data LibNotifyUrgencyHook = LibNotifyUrgencyHook deriving (Read, Show)
+data App
+  = ClassApp AppClassName AppCommand
+  | TitleApp AppTitle AppCommand
+  | NameApp AppName AppCommand
+  deriving Show
 
 main :: IO ()
-main = do
-  spawn "feh --bg-fill ${inputs.artwork}/wallpapers/nix-wallpaper-stripes.png"
-  xmproc <- spawnPipe "xmobar"
-  startUp xmproc
-
-startUp xm = xmonad . docks . ewmh . dynProjects . urgencyHook $ def
+main = xmonad . docks . ewmh . dynProjects . urgencyHook $ def
   { terminal           = myTerminal
   , focusFollowsMouse  = True
   , clickJustFocuses   = False
@@ -109,18 +102,13 @@ startUp xm = xmonad . docks . ewmh . dynProjects . urgencyHook $ def
   , manageHook         = myManageHook
   , handleEventHook    = myEventHook
   , startupHook        = myStartupHook
-  , logHook            = dynamicLogWithPP xmobarPP
-                         {
-                           ppOutput = hPutStrLn xm
-                         }
   }
  where
   dynProjects = dynamicProjects projects
   urgencyHook = withUrgencyHook LibNotifyUrgencyHook
 
+myStartupHook :: X ()
 myStartupHook = startupHook def
-
-data LibNotifyUrgencyHook = LibNotifyUrgencyHook deriving (Read, Show)
 
 instance UrgencyHook LibNotifyUrgencyHook where
   urgencyHook LibNotifyUrgencyHook w = do
@@ -128,16 +116,13 @@ instance UrgencyHook LibNotifyUrgencyHook where
     maybeIdx <- W.findTag w <$> gets windowset
     traverse_ (\i -> safeSpawn "notify-send" [show name, "workspace " ++ i]) maybeIdx
 
-------------------------------------------------------------------------
--- Key bindings. Add, modify or remove key bindings here.
---
-
 myTerminal   = "urxvt"
 fileManager  = "urxvt -e ranger"
 appLauncher  = "dmenu_run"
 screenLocker = "multilockscreen -l dim"
 playerctl c  = "playerctl --player=spotify,%any " <> c
 
+keybindings :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
 keybindings conf@XConfig {XMonad.modMask = modm} = M.fromList $
     [ ((0, xF86XK_AudioMute              ), spawn "amixer -q set Master toggle")
     , ((0, xF86XK_AudioLowerVolume       ), spawn "amixer -q set Master 5%-")
@@ -178,19 +163,21 @@ keybindings conf@XConfig {XMonad.modMask = modm} = M.fromList $
     ] ++ switchWsById
  where
   switchWsById =
-    [ ((m .|. modm, k), (windows $ onCurrentScreen f i)) | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9], (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
+    [ ((m .|. modm, k), windows $ onCurrentScreen f i) | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9], (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
 
   switchScreen =
-    [ ((m .|. modm, k), (screenWorkspace sc >>= flip whenJust (windows . f))) | (k, sc) <- zip [xK_w, xK_e, xK_r] [0..], (f, m)  <- [(W.view, 0), (W.shift, shiftMask)]]
+    [ ((m .|. modm, k), screenWorkspace sc >>= flip whenJust (windows . f)) | (k, sc) <- zip [xK_w, xK_e, xK_r] [0..], (f, m)  <- [(W.view, 0), (W.shift, shiftMask)]]
 
 ----------- Cycle through workspaces one by one but filtering out NSP (scratchpads) -----------
 
 nextWS' = switchWS Next
 prevWS' = switchWS Prev
 
+switchWS :: Direction1D -> X ()
 switchWS dir =
-  findWorkspace filterOutNSP dir AnyWS 1 >>= windows . W.view
+  findWorkspace filterOutNSP dir anyWS 1 >>= windows . W.view
 
+filterOutNSP :: X ([WindowSpace] -> [W.Workspace String (Layout Window) Window])
 filterOutNSP =
   let g f xs = filter (\(W.Workspace t _ _) -> t /= "NSP") (f xs)
   in  g <$> getSortByIndex
@@ -198,6 +185,7 @@ filterOutNSP =
 ------------------------------------------------------------------------
 -- Mouse bindings: default actions bound to mouse events
 --
+myMouseBindings :: XConfig l -> M.Map (KeyMask, Button) (Window -> X ())
 myMouseBindings XConfig {XMonad.modMask = modm} = M.fromList
     [ ((modm, button1), \w -> focus w >> mouseMoveWindow w >> windows W.shiftMaster)
     , ((modm, button2), \w -> focus w >> windows W.shiftMaster)
@@ -242,37 +230,11 @@ myLayout =
      -- Fullscreen
      fullScreenToggle = mkToggle (single NBFULL)
 
-------------------------------------------------------------------------
--- Window rules:
-
--- Execute arbitrary actions and WindowSet manipulations when managing
--- a new window. You can use this to, for example, always float a
--- particular program, or have a client always appear on a particular
--- workspace.
---
--- To find the property name associated with a program, use
--- > xprop | grep WM_CLASS
--- and click on the client you're interested in.
---
--- To match on the WM_NAME, you can use 'title' in the same way that
--- 'className' and 'resource' are used below.
---
-
-type AppName      = String
-type AppTitle     = String
-type AppClassName = String
-type AppCommand   = String
-
-data App
-  = ClassApp AppClassName AppCommand
-  | TitleApp AppTitle AppCommand
-  | NameApp AppName AppCommand
-  deriving Show
-
 gimp      = ClassApp "Gimp"                 "gimp"
 pavuctrl  = ClassApp "Pavucontrol"          "pavucontrol"
 spotify   = ClassApp "Spotify"              "spotify"
 
+myManageHook :: Query (Endo WindowSet)
 myManageHook = manageApps <+> manageSpawn <+> manageScratchpads
  where
   isBrowserDialog     = isDialog <&&> className =? "Firefox"
@@ -302,27 +264,30 @@ myManageHook = manageApps <+> manageSpawn <+> manageScratchpads
     , pure True                                -?> tileBelow
     ]
 
+isInstance :: App -> Query Bool
 isInstance (ClassApp c _) = className =? c
 isInstance (TitleApp t _) = title =? t
 isInstance (NameApp n _)  = appName =? n
 
+getNameCommand :: App -> (AppClassName, AppCommand)
 getNameCommand (ClassApp n c) = (n, c)
 getNameCommand (TitleApp n c) = (n, c)
 getNameCommand (NameApp  n c) = (n, c)
 
+getAppName :: App -> AppClassName
 getAppName    = fst . getNameCommand
+getAppCommand :: App -> AppCommand
 getAppCommand = snd . getNameCommand
 
 scratchpadApp :: App -> NamedScratchpad
 scratchpadApp app = NS (getAppName app) (getAppCommand app) (isInstance app) defaultFloating
 
+runScratchpadApp :: App -> X ()
 runScratchpadApp = namedScratchpadAction scratchpads . getAppName
 
+scratchpads :: [NamedScratchpad]
 scratchpads = scratchpadApp <$> [ spotify, pavuctrl, gimp ]
 
-------------------------------------------------------------------------
--- Workspaces
---
 webWs = "web"
 devWs = "dev"
 cliWs = "cli"
@@ -364,9 +329,8 @@ projectsTheme = amberXPConfig
   , position = CenteredAt 0.5 0.5
   }
 
+myEventHook :: Event -> X All
 myEventHook = docksEventHook <+> ewmhDesktopsEventHook <+> fullscreenEventHook
-
-myLogHook = fadeInactiveLogHook 0.9
 
 runNixpkg :: XPConfig -> String -> X ()
 runNixpkg conf x = inputPrompt conf x ?+ \i -> spawn $ "nix-shell -p " ++ i ++ " --run " ++ i

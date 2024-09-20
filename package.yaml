@@ -1,0 +1,45 @@
+name:                xmonad-cfg
+version:             0.1.0.0
+github:              "fxttr/xmonad-cfg"
+license:             GPL-3
+author:              "Florian Marrero Liestmann"
+maintainer:          "f.m.liestmann@fx-ttr.de"
+copyright:           "2024 Florian Marrero Liestmann"
+
+extra-source-files:
+- README.md
+- CHANGELOG.md
+
+description:         Please see the README on GitHub at <https://github.com/fxttr/xmonad-cfg#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- xmonad
+- xmonad-contrib
+- containers
+- X11
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wmissing-export-lists
+- -Wmissing-home-modules
+- -Wpartial-fields
+- -Wredundant-constraints
+
+library:
+  source-dirs: src
+
+executables:
+  xmonad-cfg-exe:
+    main:                Xmonad.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - xmonad-cfg
