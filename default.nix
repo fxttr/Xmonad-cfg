@@ -222,16 +222,13 @@ in
         import XMonad.Util.Run
         import XMonad.Prompt
         import XMonad.Prompt.Input
-        import XMonad.Layout.IndependentScreens
         import Data.Char (isSpace)
 
         main :: IO ()
         main = do
           spawn "feh --bg-fill ${inputs.artwork}/wallpapers/nix-wallpaper-stripes.png"
-          xmproc0 <- spawnPipe "xmobar -x 0"
-          xmproc1 <- spawnPipe "xmobar -x 1"
-          startUp xmproc0
-          startUp xmproc1
+          xmproc <- spawnPipe "xmobar"
+          startUp xmproc
 
         startUp xm = xmonad . docks . ewmh . dynProjects . urgencyHook $ def
           { terminal           = myTerminal
@@ -240,7 +237,7 @@ in
           , borderWidth        = 2
           , modMask            = mod4Mask
           , keys = keybindings
-          , workspaces         = withScreens 2 myWS
+          , workspaces         = myWS
           , normalBorderColor  = "#BFBFBF"
           , focusedBorderColor = "#bd93f9"
           , mouseBindings      = myMouseBindings
@@ -317,7 +314,7 @@ in
             ] ++ switchWsById
          where
           switchWsById =
-            [ ((m .|. modm, k), (windows $ onCurrentScreen f i)) | (i, k) <- zip (workspaces' conf) [xK_1 .. xK_9], (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
+            [ ((m .|. modm, k), (windows $ f i)) | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9], (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
 
           switchScreen =
             [ ((m .|. modm, k), (screenWorkspace sc >>= flip whenJust (windows . f))) | (k, sc) <- zip [xK_w, xK_e, xK_r] [0..], (f, m)  <- [(W.view, 0), (W.shift, shiftMask)]]
