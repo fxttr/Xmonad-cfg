@@ -1,6 +1,7 @@
 { pkgs, lib, inputs, ... }:
 
 let
+  colorscheme = import ./colors.nix;
   extra = ''
     set +x
     ${pkgs.util-linux}/bin/setterm -blank 0 -powersave off -powerdown 0
